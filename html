@@ -1,600 +1,1015 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Trophy, BookOpen, TrendingUp, Play, Check, Target } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4F46E5">
+    <title>Couch to 5K Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const Couch5KApp = () => {
-  const [currentWeek, setCurrentWeek] = useState(1);
-  const [completedWorkouts, setCompletedWorkouts] = useState({});
-  const [selectedTab, setSelectedTab] = useState('plan');
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [dailyTipIndex, setDailyTipIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%);
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
 
-  // Training plan - progressive couch to 5K program
-  const trainingPlan = [
-    {
-      week: 1,
-      description: "Getting Started - Walk/Run Intervals",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
-        { day: 2, activity: "Rest or gentle 20-minute walk", duration: "20 min" },
-        { day: 3, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
-        { day: 4, activity: "Rest day - stay active with stretching", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
-        { day: 6, activity: "Rest or gentle yoga/stretching", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 2,
-      description: "Building Endurance",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
-        { day: 2, activity: "Rest or 25-minute walk", duration: "25 min" },
-        { day: 3, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
-        { day: 4, activity: "Rest day - focus on hydration", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
-        { day: 6, activity: "Rest or gentle stretching", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 3,
-      description: "Increasing Run Time",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
-        { day: 2, activity: "Rest or 25-minute walk", duration: "25 min" },
-        { day: 3, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
-        { day: 6, activity: "Rest or light activity", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 4,
-      description: "Longer Intervals",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
-        { day: 6, activity: "Rest or stretching", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 5,
-      description: "Milestone Week",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 5-min jog, 3-min walk, 5-min jog, 3-min walk, 5-min jog.", duration: "31 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 8-min jog, 5-min walk, 8-min jog.", duration: "31 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 20-minute jog (no walking!)", duration: "25 min" },
-        { day: 6, activity: "Rest or gentle yoga", duration: "Rest" },
-        { day: 7, activity: "Rest day - celebrate your progress!", duration: "Rest" }
-      ]
-    },
-    {
-      week: 6,
-      description: "Building Stamina",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 5-min jog, 3-min walk, 8-min jog, 3-min walk, 5-min jog.", duration: "34 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 10-min jog, 3-min walk, 10-min jog.", duration: "33 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 22-minute jog (you're getting stronger!)", duration: "27 min" },
-        { day: 6, activity: "Rest or stretching", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 7,
-      description: "Pushing Further",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
-        { day: 6, activity: "Rest or light activity", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 8,
-      description: "Almost There!",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
-        { day: 6, activity: "Rest or stretching", duration: "Rest" },
-        { day: 7, activity: "Rest day", duration: "Rest" }
-      ]
-    },
-    {
-      week: 9,
-      description: "Final Push to 5K!",
-      workouts: [
-        { day: 1, activity: "Brisk 5-min walk, then: 30-minute jog", duration: "35 min" },
-        { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
-        { day: 3, activity: "Brisk 5-min walk, then: 30-minute jog", duration: "35 min" },
-        { day: 4, activity: "Rest day", duration: "Rest" },
-        { day: 5, activity: "Brisk 5-min walk, then: 5K run! (approximately 30-35 minutes)", duration: "35-40 min" },
-        { day: 6, activity: "Rest - you did it!", duration: "Rest" },
-        { day: 7, activity: "Celebration walk or rest", duration: "Rest" }
-      ]
-    }
-  ];
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+        }
 
-  // Daily educational tips
-  const dailyTips = [
-    {
-      title: "Proper Running Form",
-      content: "Keep your head up, shoulders relaxed, and arms at a 90-degree angle. Your foot should land under your body, not in front of it. This reduces impact and prevents injury."
-    },
-    {
-      title: "The Importance of Rest Days",
-      content: "Rest days aren't lazy days—they're when your muscles repair and grow stronger. Your body adapts to training during rest, not during the workout itself."
-    },
-    {
-      title: "Hydration Matters",
-      content: "Drink water throughout the day, not just during runs. Aim for pale yellow urine as a hydration indicator. For runs under 30 minutes, pre-hydration is usually sufficient."
-    },
-    {
-      title: "Start Slow to Go Fast",
-      content: "Your running pace should allow you to hold a conversation. If you're gasping for air, slow down! Building aerobic base at comfortable speeds leads to better long-term progress."
-    },
-    {
-      title: "Proper Footwear",
-      content: "Invest in good running shoes from a specialty running store. Get fitted based on your gait and foot type. Replace shoes every 300-500 miles to prevent injury."
-    },
-    {
-      title: "Warm-Up and Cool-Down",
-      content: "Always start with a brisk 5-minute walk to warm up muscles and increase blood flow. End with walking and gentle stretching to aid recovery and flexibility."
-    },
-    {
-      title: "Listen to Your Body",
-      content: "Distinguish between discomfort (normal) and pain (warning sign). Sharp pains, swelling, or pain that worsens with activity means it's time to rest and possibly see a doctor."
-    },
-    {
-      title: "Breathing Technique",
-      content: "Breathe naturally through both nose and mouth. Try a 3:2 pattern: inhale for 3 steps, exhale for 2 steps. This creates a rhythm and ensures adequate oxygen."
-    },
-    {
-      title: "Nutrition for Runners",
-      content: "Eat a balanced diet with adequate carbohydrates for energy, protein for muscle repair, and healthy fats. Time meals 2-3 hours before runs to avoid discomfort."
-    },
-    {
-      title: "Setting Realistic Goals",
-      content: "Progress isn't linear. Some days will feel harder than others. Trust the process and celebrate small victories—every run completed is a success!"
-    },
-    {
-      title: "Cross-Training Benefits",
-      content: "Swimming, cycling, or strength training on rest days can improve overall fitness without the impact of running. Strong core and legs prevent running injuries."
-    },
-    {
-      title: "Weather Considerations",
-      content: "Dress in layers you can remove. In heat, run during cooler parts of the day and slow your pace. In cold, protect extremities and warm up thoroughly."
-    },
-    {
-      title: "The Mental Game",
-      content: "Running is 90% mental. Create a motivating playlist, practice positive self-talk, and visualize yourself succeeding. Your mind will often give up before your body needs to."
-    },
-    {
-      title: "Injury Prevention",
-      content: "Increase weekly mileage by no more than 10%. Incorporate rest days, proper warm-ups, and strength training. Don't ignore persistent pain—early intervention prevents chronic issues."
-    },
-    {
-      title: "Finding Your Community",
-      content: "Join a local running group or online community. Shared experiences, accountability, and encouragement make the journey more enjoyable and sustainable."
-    }
-  ];
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
 
-  // Motivational quotes
-  const motivations = [
-    "The miracle isn't that you finished. The miracle is that you had the courage to start.",
-    "Your only limit is you. You're capable of more than you think.",
-    "Every workout is progress. Show up for yourself today.",
-    "It doesn't get easier, you just get stronger.",
-    "The pain you feel today will be the strength you feel tomorrow.",
-    "Don't stop when you're tired. Stop when you're done.",
-    "You're not training for a race. You're training for life.",
-    "Slow progress is still progress. Keep going!"
-  ];
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
 
-  // Load data from storage
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const weekResult = await window.storage.get('currentWeek');
-        const workoutsResult = await window.storage.get('completedWorkouts');
-        const welcomeResult = await window.storage.get('showWelcome');
-        const tipResult = await window.storage.get('dailyTipIndex');
+        .header h1 {
+            font-size: 28px;
+            color: #1F2937;
+        }
 
-        if (weekResult) setCurrentWeek(parseInt(weekResult.value));
-        if (workoutsResult) setCompletedWorkouts(JSON.parse(workoutsResult.value));
-        if (welcomeResult) setShowWelcome(welcomeResult.value === 'true');
-        if (tipResult) setDailyTipIndex(parseInt(tipResult.value));
-      } catch (error) {
-        console.log('No saved data found, starting fresh');
-      }
-      setIsLoading(false);
-    };
-    loadData();
-  }, []);
+        .header p {
+            color: #6B7280;
+            font-size: 14px;
+        }
 
-  // Save data to storage
-  const saveData = async (week, workouts, welcome, tipIndex) => {
-    try {
-      await window.storage.set('currentWeek', week.toString());
-      await window.storage.set('completedWorkouts', JSON.stringify(workouts));
-      await window.storage.set('showWelcome', welcome.toString());
-      await window.storage.set('dailyTipIndex', tipIndex.toString());
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
-  };
+        .trophy-icon {
+            width: 48px;
+            height: 48px;
+            color: #4F46E5;
+        }
 
-  const toggleWorkout = (week, day) => {
-    const key = `${week}-${day}`;
-    const newCompleted = { ...completedWorkouts };
-    
-    if (newCompleted[key]) {
-      delete newCompleted[key];
-    } else {
-      newCompleted[key] = new Date().toISOString();
-    }
-    
-    setCompletedWorkouts(newCompleted);
-    saveData(currentWeek, newCompleted, showWelcome, dailyTipIndex);
-  };
+        .progress-section {
+            background: #EEF2FF;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
 
-  const changeWeek = (direction) => {
-    const newWeek = Math.max(1, Math.min(9, currentWeek + direction));
-    setCurrentWeek(newWeek);
-    saveData(newWeek, completedWorkouts, showWelcome, dailyTipIndex);
-  };
+        .progress-bar {
+            background: #D1D5DB;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
 
-  const dismissWelcome = () => {
-    setShowWelcome(false);
-    saveData(currentWeek, completedWorkouts, false, dailyTipIndex);
-  };
+        .progress-fill {
+            background: #4F46E5;
+            height: 100%;
+            transition: width 0.5s ease;
+        }
 
-  const nextTip = () => {
-    const newIndex = (dailyTipIndex + 1) % dailyTips.length;
-    setDailyTipIndex(newIndex);
-    saveData(currentWeek, completedWorkouts, showWelcome, newIndex);
-  };
+        .motivation-quote {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 16px;
+            border-radius: 8px;
+            font-style: italic;
+            color: #78350F;
+        }
 
-  const getProgress = () => {
-    const totalWorkouts = Object.keys(completedWorkouts).length;
-    const currentWeekCompleted = Object.keys(completedWorkouts)
-      .filter(key => key.startsWith(`${currentWeek}-`)).length;
-    return { total: totalWorkouts, currentWeek: currentWeekCompleted };
-  };
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
 
-  const progress = getProgress();
-  const currentPlan = trainingPlan[currentWeek - 1];
-  const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.5);
+            color: #6B7280;
+        }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-indigo-600 text-xl">Loading your training plan...</div>
-      </div>
-    );
-  }
+        .tab.active {
+            background: white;
+            color: #4F46E5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
 
-  if (showWelcome) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8">
-          <div className="text-center mb-6">
-            <Trophy className="w-20 h-20 text-indigo-600 mx-auto mb-4" />
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">Welcome to Your 5K Journey!</h1>
-            <p className="text-xl text-gray-600">From Couch to 5K in 9 Weeks</p>
-          </div>
-          
-          <div className="space-y-4 mb-8">
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-indigo-900 mb-2">🎯 What You'll Achieve</h3>
-              <p className="text-gray-700">In just 9 weeks, you'll go from a sedentary lifestyle to running a full 5K (3.1 miles). This scientifically-designed program gradually builds your endurance through walk-run intervals.</p>
+        .week-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .week-nav-btn {
+            padding: 8px 16px;
+            background: #EEF2FF;
+            color: #4F46E5;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .week-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .week-info {
+            text-align: center;
+        }
+
+        .week-info h2 {
+            font-size: 24px;
+            color: #1F2937;
+        }
+
+        .workout-item {
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid #C7D2FE;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            transition: all 0.3s;
+        }
+
+        .workout-item.completed {
+            background: #ECFDF5;
+            border-color: #10B981;
+        }
+
+        .workout-item.rest {
+            background: #F9FAFB;
+            border-color: #D1D5DB;
+        }
+
+        .workout-checkbox {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #EEF2FF;
+            color: #4F46E5;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .workout-checkbox.completed {
+            background: #10B981;
+            color: white;
+        }
+
+        .workout-details {
+            flex: 1;
+        }
+
+        .workout-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .workout-duration {
+            background: #F3F4F6;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.indigo {
+            background: #EEF2FF;
+        }
+
+        .stat-card.green {
+            background: #ECFDF5;
+        }
+
+        .stat-card.purple {
+            background: #F5F3FF;
+        }
+
+        .stat-card.amber {
+            background: #FEF3C7;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.indigo {
+            color: #4F46E5;
+        }
+
+        .stat-value.green {
+            color: #10B981;
+        }
+
+        .stat-value.purple {
+            color: #8B5CF6;
+        }
+
+        .stat-value.amber {
+            color: #F59E0B;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .tip-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #312E81;
+            margin-bottom: 12px;
+        }
+
+        .tip-content {
+            color: #4B5563;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 1000;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            padding: 32px;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .welcome-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1F2937;
+            margin: 16px 0 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: #6B7280;
+        }
+
+        .info-box {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-box.indigo {
+            background: #EEF2FF;
+        }
+
+        .info-box.green {
+            background: #ECFDF5;
+        }
+
+        .info-box.amber {
+            background: #FEF3C7;
+        }
+
+        .info-box.purple {
+            background: #F5F3FF;
+        }
+
+        .info-box h3 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .info-box.indigo h3 {
+            color: #312E81;
+        }
+
+        .info-box.green h3 {
+            color: #065F46;
+        }
+
+        .info-box.amber h3 {
+            color: #78350F;
+        }
+
+        .info-box.purple h3 {
+            color: #5B21B6;
+        }
+
+        .info-box p, .info-box ul {
+            color: #4B5563;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 4px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .quick-tips {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .quick-tips h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1F2937;
+        }
+
+        .quick-tips ul {
+            list-style: none;
+        }
+
+        .quick-tips li {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            color: #4B5563;
+            font-size: 14px;
+        }
+
+        .bullet {
+            color: #4F46E5;
+            font-weight: 700;
+        }
+
+        .week-progress {
+            margin-bottom: 16px;
+        }
+
+        .week-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .week-progress-bar {
+            background: #D1D5DB;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .week-progress-fill {
+            background: #4F46E5;
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .welcome-card {
+                padding: 24px;
+            }
+
+            .welcome-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen" class="welcome-screen hidden">
+        <div class="welcome-card">
+            <div class="welcome-header">
+                <div style="font-size: 60px; text-align: center;">🏆</div>
+                <h1 class="welcome-title">Welcome to Your 5K Journey!</h1>
+                <p class="welcome-subtitle">From Couch to 5K in 9 Weeks</p>
             </div>
-            
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-900 mb-2">💪 How It Works</h3>
-              <p className="text-gray-700">Start with mostly walking and short running intervals. Each week progressively increases running time while decreasing walking. By week 9, you'll run continuously for 30+ minutes!</p>
-            </div>
-            
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-900 mb-2">📚 Learn & Grow</h3>
-              <p className="text-gray-700">Get daily educational tips about running form, nutrition, injury prevention, and motivation. Build knowledge alongside fitness!</p>
+
+            <div class="info-box indigo">
+                <h3>🎯 What You'll Achieve</h3>
+                <p>In just 9 weeks, you'll go from a sedentary lifestyle to running a full 5K (3.1 miles). This scientifically-designed program gradually builds your endurance through walk-run intervals.</p>
             </div>
 
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-900 mb-2">✅ Key Principles</h3>
-              <ul className="list-disc list-inside text-gray-700 space-y-1">
-                <li>3 run days per week with rest days in between</li>
-                <li>Always warm up with a 5-minute brisk walk</li>
-                <li>Go at YOUR pace—you should be able to talk while jogging</li>
-                <li>Rest days are crucial for recovery and growth</li>
-                <li>Listen to your body and never push through pain</li>
-              </ul>
+            <div class="info-box green">
+                <h3>💪 How It Works</h3>
+                <p>Start with mostly walking and short running intervals. Each week progressively increases running time while decreasing walking. By week 9, you'll run continuously for 30+ minutes!</p>
             </div>
-          </div>
 
-          <button
-            onClick={dismissWelcome}
-            className="w-full bg-indigo-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition-colors"
-          >
-            Start My Journey
-          </button>
+            <div class="info-box amber">
+                <h3>📚 Learn & Grow</h3>
+                <p>Get daily educational tips about running form, nutrition, injury prevention, and motivation. Build knowledge alongside fitness!</p>
+            </div>
+
+            <div class="info-box purple">
+                <h3>✅ Key Principles</h3>
+                <ul>
+                    <li>3 run days per week with rest days in between</li>
+                    <li>Always warm up with a 5-minute brisk walk</li>
+                    <li>Go at YOUR pace—you should be able to talk while jogging</li>
+                    <li>Rest days are crucial for recovery and growth</li>
+                    <li>Listen to your body and never push through pain</li>
+                </ul>
+            </div>
+
+            <button class="btn-primary" onclick="startJourney()">Start My Journey</button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-4xl mx-auto p-4 pb-24">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Couch to 5K</h1>
-              <p className="text-gray-600">Week {currentWeek} of 9</p>
-            </div>
-            <Trophy className="w-12 h-12 text-indigo-600" />
-          </div>
-          
-          <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-            <p className="text-sm text-gray-600 mb-2">Overall Progress</p>
-            <div className="flex items-center gap-4">
-              <div className="flex-1 bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${(currentWeek / 9) * 100}%` }}
-                />
-              </div>
-              <span className="text-sm font-semibold text-gray-700">{Math.round((currentWeek / 9) * 100)}%</span>
-            </div>
-            <p className="text-xs text-gray-600 mt-2">{progress.total} total workouts completed</p>
-          </div>
-
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
-            <p className="text-sm text-amber-900 italic">"{randomMotivation}"</p>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setSelectedTab('plan')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-              selectedTab === 'plan'
-                ? 'bg-white text-indigo-600 shadow-lg'
-                : 'bg-white/50 text-gray-600 hover:bg-white/70'
-            }`}
-          >
-            <Calendar className="w-5 h-5 inline mr-2" />
-            Training Plan
-          </button>
-          <button
-            onClick={() => setSelectedTab('stats')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-              selectedTab === 'stats'
-                ? 'bg-white text-indigo-600 shadow-lg'
-                : 'bg-white/50 text-gray-600 hover:bg-white/70'
-            }`}
-          >
-            <TrendingUp className="w-5 h-5 inline mr-2" />
-            Progress
-          </button>
-          <button
-            onClick={() => setSelectedTab('learn')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-              selectedTab === 'learn'
-                ? 'bg-white text-indigo-600 shadow-lg'
-                : 'bg-white/50 text-gray-600 hover:bg-white/70'
-            }`}
-          >
-            <BookOpen className="w-5 h-5 inline mr-2" />
-            Learn
-          </button>
-        </div>
-
-        {/* Training Plan Tab */}
-        {selectedTab === 'plan' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => changeWeek(-1)}
-                  disabled={currentWeek === 1}
-                  className="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-200 transition-colors"
-                >
-                  ← Previous
-                </button>
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-gray-800">Week {currentWeek}</h2>
-                  <p className="text-sm text-gray-600">{currentPlan.description}</p>
-                </div>
-                <button
-                  onClick={() => changeWeek(1)}
-                  disabled={currentWeek === 9}
-                  className="px-4 py-2 bg-indigo-100 text-indigo-600 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-200 transition-colors"
-                >
-                  Next →
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {currentPlan.workouts.map((workout) => {
-                  const isCompleted = completedWorkouts[`${currentWeek}-${workout.day}`];
-                  const isRest = workout.activity.toLowerCase().includes('rest');
-                  
-                  return (
-                    <div
-                      key={workout.day}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        isCompleted
-                          ? 'bg-green-50 border-green-500'
-                          : isRest
-                          ? 'bg-gray-50 border-gray-300'
-                          : 'bg-white border-indigo-200 hover:border-indigo-400'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <button
-                          onClick={() => toggleWorkout(currentWeek, workout.day)}
-                          className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                            isCompleted
-                              ? 'bg-green-500 text-white'
-                              : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-                          }`}
-                        >
-                          {isCompleted ? <Check className="w-6 h-6" /> : <Play className="w-5 h-5" />}
-                        </button>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold text-gray-800">Day {workout.day}</h3>
-                            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                              {workout.duration}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 text-sm">{workout.activity}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Progress Tab */}
-        {selectedTab === 'stats' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <Target className="w-6 h-6 text-indigo-600" />
-                Your Progress Stats
-              </h2>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-indigo-50 p-4 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-indigo-600">{progress.total}</p>
-                  <p className="text-sm text-gray-600">Total Workouts</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-green-600">{progress.currentWeek}/7</p>
-                  <p className="text-sm text-gray-600">This Week</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-purple-600">{currentWeek}</p>
-                  <p className="text-sm text-gray-600">Current Week</p>
-                </div>
-                <div className="bg-amber-50 p-4 rounded-lg text-center">
-                  <p className="text-3xl font-bold text-amber-600">{9 - currentWeek}</p>
-                  <p className="text-sm text-gray-600">Weeks Remaining</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-800">Weekly Progress</h3>
-                {trainingPlan.map((week) => {
-                  const weekWorkouts = week.workouts.filter(w => !w.activity.toLowerCase().includes('rest')).length;
-                  const completedInWeek = Object.keys(completedWorkouts)
-                    .filter(key => key.startsWith(`${week.week}-`)).length;
-                  const percentage = (completedInWeek / weekWorkouts) * 100;
-
-                  return (
-                    <div key={week.week} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-700">Week {week.week}</span>
-                        <span className="text-gray-600">{completedInWeek}/{weekWorkouts}</span>
-                      </div>
-                      <div className="bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Learn Tab */}
-        {selectedTab === 'learn' && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-indigo-600" />
-                Daily Education
-              </h2>
-              <p className="text-gray-600 mb-6 text-sm">Build your running knowledge one tip at a time</p>
-
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-lg mb-4">
-                <h3 className="text-xl font-bold text-indigo-900 mb-3">
-                  {dailyTips[dailyTipIndex].title}
-                </h3>
-                <p className="text-gray-700 leading-relaxed mb-4">
-                  {dailyTips[dailyTipIndex].content}
-                </p>
-                <button
-                  onClick={nextTip}
-                  className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
-                >
-                  Next Tip →
-                </button>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600 text-center">
-                  Tip {dailyTipIndex + 1} of {dailyTips.length}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Tips</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  <span className="text-gray-700 text-sm">Stay hydrated throughout the day, not just during runs</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  <span className="text-gray-700 text-sm">You should be able to hold a conversation while jogging</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  <span className="text-gray-700 text-sm">Rest days are when your muscles actually get stronger</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  <span className="text-gray-700 text-sm">Invest in proper running shoes from a specialty store</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-indigo-600 font-bold">•</span>
-                  <span className="text-gray-700 text-sm">Listen to your body—pain is different from discomfort</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
-  );
-};
 
-export default Couch5KApp;
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <div class="container">
+            <!-- Header Card -->
+            <div class="card">
+                <div class="header">
+                    <div>
+                        <h1>Couch to 5K</h1>
+                        <p>Week <span id="currentWeekDisplay">1</span> of 9</p>
+                    </div>
+                    <div style="font-size: 48px;">🏆</div>
+                </div>
+
+                <div class="progress-section">
+                    <p style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">Overall Progress</p>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="progress-bar" style="flex: 1;">
+                            <div id="overallProgress" class="progress-fill" style="width: 11%;"></div>
+                        </div>
+                        <span id="overallPercentage" style="font-weight: 600; color: #4B5563; font-size: 14px;">11%</span>
+                    </div>
+                    <p id="totalWorkouts" style="font-size: 12px; color: #6B7280; margin-top: 8px;">0 total workouts completed</p>
+                </div>
+
+                <div class="motivation-quote">
+                    <p id="motivationQuote"></p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('plan')">📅 Training Plan</button>
+                <button class="tab" onclick="switchTab('stats')">📊 Progress</button>
+                <button class="tab" onclick="switchTab('learn')">📚 Learn</button>
+            </div>
+
+            <!-- Training Plan Tab -->
+            <div id="planTab" class="card">
+                <div class="week-navigation">
+                    <button class="week-nav-btn" id="prevWeek" onclick="changeWeek(-1)">← Previous</button>
+                    <div class="week-info">
+                        <h2>Week <span id="weekNumber">1</span></h2>
+                        <p style="font-size: 14px; color: #6B7280;" id="weekDescription">Getting Started</p>
+                    </div>
+                    <button class="week-nav-btn" id="nextWeek" onclick="changeWeek(1)">Next →</button>
+                </div>
+
+                <div id="workoutList"></div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="statsTab" class="card hidden">
+                <h2 style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                    <span>🎯</span> Your Progress Stats
+                </h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card indigo">
+                        <div class="stat-value indigo" id="statTotal">0</div>
+                        <div class="stat-label">Total Workouts</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-value green" id="statWeek">0/7</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-value purple" id="statCurrent">1</div>
+                        <div class="stat-label">Current Week</div>
+                    </div>
+                    <div class="stat-card amber">
+                        <div class="stat-value amber" id="statRemaining">9</div>
+                        <div class="stat-label">Weeks Remaining</div>
+                    </div>
+                </div>
+
+                <h3 style="font-weight: 600; margin-bottom: 16px;">Weekly Progress</h3>
+                <div id="weeklyProgressList"></div>
+            </div>
+
+            <!-- Learn Tab -->
+            <div id="learnTab" class="card hidden">
+                <h2 style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <span>📚</span> Daily Education
+                </h2>
+                <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Build your running knowledge one tip at a time</p>
+
+                <div class="tip-card">
+                    <h3 class="tip-title" id="tipTitle"></h3>
+                    <p class="tip-content" id="tipContent"></p>
+                    <button class="btn-primary" onclick="nextTip()">Next Tip →</button>
+                </div>
+
+                <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 24px;">
+                    <p style="font-size: 14px; color: #6B7280;">Tip <span id="tipNumber">1</span> of 15</p>
+                </div>
+
+                <div class="quick-tips">
+                    <h3>Quick Tips</h3>
+                    <ul>
+                        <li><span class="bullet">•</span> <span>Stay hydrated throughout the day, not just during runs</span></li>
+                        <li><span class="bullet">•</span> <span>You should be able to hold a conversation while jogging</span></li>
+                        <li><span class="bullet">•</span> <span>Rest days are when your muscles actually get stronger</span></li>
+                        <li><span class="bullet">•</span> <span>Invest in proper running shoes from a specialty store</span></li>
+                        <li><span class="bullet">•</span> <span>Listen to your body—pain is different from discomfort</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Training Data
+        const trainingPlan = [
+            {
+                week: 1,
+                description: "Getting Started - Walk/Run Intervals",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
+                    { day: 2, activity: "Rest or gentle 20-minute walk", duration: "20 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
+                    { day: 4, activity: "Rest day - stay active with stretching", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then 8 rounds of: 60s jog + 90s walk. End with 5-min walk.", duration: "20 min" },
+                    { day: 6, activity: "Rest or gentle yoga/stretching", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 2,
+                description: "Building Endurance",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
+                    { day: 2, activity: "Rest or 25-minute walk", duration: "25 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
+                    { day: 4, activity: "Rest day - focus on hydration", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then 6 rounds of: 90s jog + 2-min walk. End with 5-min walk.", duration: "25 min" },
+                    { day: 6, activity: "Rest or gentle stretching", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 3,
+                description: "Increasing Run Time",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
+                    { day: 2, activity: "Rest or 25-minute walk", duration: "25 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then repeat 2x: (90s jog, 90s walk, 3-min jog, 3-min walk).", duration: "28 min" },
+                    { day: 6, activity: "Rest or light activity", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 4,
+                description: "Longer Intervals",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 3-min jog, 90s walk, 5-min jog, 2.5-min walk, 3-min jog, 90s walk, 5-min jog.", duration: "30 min" },
+                    { day: 6, activity: "Rest or stretching", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 5,
+                description: "Milestone Week",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 5-min jog, 3-min walk, 5-min jog, 3-min walk, 5-min jog.", duration: "31 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 8-min jog, 5-min walk, 8-min jog.", duration: "31 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 20-minute jog (no walking!)", duration: "25 min" },
+                    { day: 6, activity: "Rest or gentle yoga", duration: "Rest" },
+                    { day: 7, activity: "Rest day - celebrate your progress!", duration: "Rest" }
+                ]
+            },
+            {
+                week: 6,
+                description: "Building Stamina",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 5-min jog, 3-min walk, 8-min jog, 3-min walk, 5-min jog.", duration: "34 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 10-min jog, 3-min walk, 10-min jog.", duration: "33 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 22-minute jog (you're getting stronger!)", duration: "27 min" },
+                    { day: 6, activity: "Rest or stretching", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 7,
+                description: "Pushing Further",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 25-minute jog", duration: "30 min" },
+                    { day: 6, activity: "Rest or light activity", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 8,
+                description: "Almost There!",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 28-minute jog", duration: "33 min" },
+                    { day: 6, activity: "Rest or stretching", duration: "Rest" },
+                    { day: 7, activity: "Rest day", duration: "Rest" }
+                ]
+            },
+            {
+                week: 9,
+                description: "Final Push to 5K!",
+                workouts: [
+                    { day: 1, activity: "Brisk 5-min walk, then: 30-minute jog", duration: "35 min" },
+                    { day: 2, activity: "Rest or 30-minute walk", duration: "30 min" },
+                    { day: 3, activity: "Brisk 5-min walk, then: 30-minute jog", duration: "35 min" },
+                    { day: 4, activity: "Rest day", duration: "Rest" },
+                    { day: 5, activity: "Brisk 5-min walk, then: 5K run! (approximately 30-35 minutes)", duration: "35-40 min" },
+                    { day: 6, activity: "Rest - you did it!", duration: "Rest" },
+                    { day: 7, activity: "Celebration walk or rest", duration: "Rest" }
+                ]
+            }
+        ];
+
+        const dailyTips = [
+            {
+                title: "Proper Running Form",
+                content: "Keep your head up, shoulders relaxed, and arms at a 90-degree angle. Your foot should land under your body, not in front of it. This reduces impact and prevents injury."
+            },
+            {
+                title: "The Importance of Rest Days",
+                content: "Rest days aren't lazy days—they're when your muscles repair and grow stronger. Your body adapts to training during rest, not during the workout itself."
+            },
+            {
+                title: "Hydration Matters",
+                content: "Drink water throughout the day, not just during runs. Aim for pale yellow urine as a hydration indicator. For runs under 30 minutes, pre-hydration is usually sufficient."
+            },
+            {
+                title: "Start Slow to Go Fast",
+                content: "Your running pace should allow you to hold a conversation. If you're gasping for air, slow down! Building aerobic base at comfortable speeds leads to better long-term progress."
+            },
+            {
+                title: "Proper Footwear",
+                content: "Invest in good running shoes from a specialty running store. Get fitted based on your gait and foot type. Replace shoes every 300-500 miles to prevent injury."
+            },
+            {
+                title: "Warm-Up and Cool-Down",
+                content: "Always start with a brisk 5-minute walk to warm up muscles and increase blood flow. End with walking and gentle stretching to aid recovery and flexibility."
+            },
+            {
+                title: "Listen to Your Body",
+                content: "Distinguish between discomfort (normal) and pain (warning sign). Sharp pains, swelling, or pain that worsens with activity means it's time to rest and possibly see a doctor."
+            },
+            {
+                title: "Breathing Technique",
+                content: "Breathe naturally through both nose and mouth. Try a 3:2 pattern: inhale for 3 steps, exhale for 2 steps. This creates a rhythm and ensures adequate oxygen."
+            },
+            {
+                title: "Nutrition for Runners",
+                content: "Eat a balanced diet with adequate carbohydrates for energy, protein for muscle repair, and healthy fats. Time meals 2-3 hours before runs to avoid discomfort."
+            },
+            {
+                title: "Setting Realistic Goals",
+                content: "Progress isn't linear. Some days will feel harder than others. Trust the process and celebrate small victories—every run completed is a success!"
+            },
+            {
+                title: "Cross-Training Benefits",
+                content: "Swimming, cycling, or strength training on rest days can improve overall fitness without the impact of running. Strong core and legs prevent running injuries."
+            },
+            {
+                title: "Weather Considerations",
+                content: "Dress in layers you can remove. In heat, run during cooler parts of the day and slow your pace. In cold, protect extremities and warm up thoroughly."
+            },
+            {
+                title: "The Mental Game",
+                content: "Running is 90% mental. Create a motivating playlist, practice positive self-talk, and visualize yourself succeeding. Your mind will often give up before your body needs to."
+            },
+            {
+                title: "Injury Prevention",
+                content: "Increase weekly mileage by no more than 10%. Incorporate rest days, proper warm-ups, and strength training. Don't ignore persistent pain—early intervention prevents chronic issues."
+            },
+            {
+                title: "Finding Your Community",
+                content: "Join a local running group or online community. Shared experiences, accountability, and encouragement make the journey more enjoyable and sustainable."
+            }
+        ];
+
+        const motivations = [
+            "The miracle isn't that you finished. The miracle is that you had the courage to start.",
+            "Your only limit is you. You're capable of more than you think.",
+            "Every workout is progress. Show up for yourself today.",
+            "It doesn't get easier, you just get stronger.",
+            "The pain you feel today will be the strength you feel tomorrow.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "You're not training for a race. You're training for life.",
+            "Slow progress is still progress. Keep going!"
+        ];
+
+        // State
+        let currentWeek = 1;
+        let completedWorkouts = {};
+        let dailyTipIndex = 0;
+        let currentTab = 'plan';
+
+        // Initialize
+        function init() {
+            loadData();
+            const showWelcome = localStorage.getItem('showWelcome');
+            if (showWelcome === null || showWelcome === 'true') {
+                document.getElementById('welcomeScreen').classList.remove('hidden');
+            } else {
+                document.getElementById('mainApp').classList.remove('hidden');
+                updateUI();
+            }
+        }
+
+        function startJourney() {
+            localStorage.setItem('showWelcome', 'false');
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            updateUI();
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('5kTrainingData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                currentWeek = data.currentWeek || 1;
+                completedWorkouts = data.completedWorkouts || {};
+                dailyTipIndex = data.dailyTipIndex || 0;
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('5kTrainingData', JSON.stringify({
+                currentWeek,
+                completedWorkouts,
+                dailyTipIndex
+            }));
+        }
+
+        function updateUI() {
+            updateHeader();
+            updateWorkoutList();
+            updateStats();
+            updateTip();
+        }
+
+        function updateHeader() {
+            const progress = getProgress();
+            const percentage = Math.round((currentWeek / 9) * 100);
+            
+            document.getElementById('currentWeekDisplay').textContent = currentWeek;
+            document.getElementById('overallProgress').style.width = percentage + '%';
+            document.getElementById('overallPercentage').textContent = percentage + '%';
+            document.getElementById('totalWorkouts').textContent = progress.total + ' total workouts completed';
+            
+            const randomMotivation = motivations[Math.floor(Math.random() * motivations.length)];
+            document.getElementById('motivationQuote').textContent = '"' + randomMotivation + '"';
+        }
+
+        function updateWorkoutList() {
+            const plan = trainingPlan[currentWeek - 1];
+            document.getElementById('weekNumber').textContent = plan.week;
+            document.getElementById('weekDescription').textContent = plan.description;
+            
+            const workoutList = document.getElementById('workoutList');
+            workoutList.innerHTML = '';
+            
+            plan.workouts.forEach(workout => {
+                const key = `${currentWeek}-${workout.day}`;
+                const isCompleted = completedWorkouts[key];
+                const isRest = workout.activity.toLowerCase().includes('rest');
+                
+                const item = document.createElement('div');
+                item.className = 'workout-item' + (isCompleted ? ' completed' : '') + (isRest ? ' rest' : '');
+                item.innerHTML = `
+                    <button class="workout-checkbox${isCompleted ? ' completed' : ''}" onclick="toggleWorkout(${currentWeek}, ${workout.day})">
+                        ${isCompleted ? '✓' : '▶'}
+                    </button>
+                    <div class="workout-details">
+                        <div class="workout-header">
+                            <h3 style="font-weight: 600; color: #1F2937;">Day ${workout.day}</h3>
+                            <span class="workout-duration">${workout.duration}</span>
+                        </div>
+                        <p style="color: #4B5563; font-size: 14px;">${workout.activity}</p>
+                    </div>
+                `;
+                workoutList.appendChild(item);
+            });
+            
+            document.getElementById('prevWeek').disabled = currentWeek === 1;
+            document.getElementById('nextWeek').disabled = currentWeek === 9;
+        }
+
+        function updateStats() {
+            const progress = getProgress();
+            
+            document.getElementById('statTotal').textContent = progress.total;
+            document.getElementById('statWeek').textContent = progress.currentWeek + '/7';
+            document.getElementById('statCurrent').textContent = currentWeek;
+            document.getElementById('statRemaining').textContent = 9 - currentWeek;
+            
+            const weeklyList = document.getElementById('weeklyProgressList');
+            weeklyList.innerHTML = '';
+            
+            trainingPlan.forEach(week => {
+                const weekWorkouts = week.workouts.filter(w => !w.activity.toLowerCase().includes('rest')).length;
+                const completedInWeek = Object.keys(completedWorkouts).filter(key => key.startsWith(`${week.week}-`)).length;
+                const percentage = (completedInWeek / weekWorkouts) * 100;
+                
+                const item = document.createElement('div');
+                item.className = 'week-progress';
+                item.innerHTML = `
+                    <div class="week-progress-header">
+                        <span style="color: #4B5563;">Week ${week.week}</span>
+                        <span style="color: #6B7280;">${completedInWeek}/${weekWorkouts}</span>
+                    </div>
+                    <div class="week-progress-bar">
+                        <div class="week-progress-fill" style="width: ${percentage}%;"></div>
+                    </div>
+                `;
+                weeklyList.appendChild(item);
+            });
+        }
+
+        function updateTip() {
+            const tip = dailyTips[dailyTipIndex];
+            document.getElementById('tipTitle').textContent = tip.title;
+            document.getElementById('tipContent').textContent = tip.content;
+            document.getElementById('tipNumber').textContent = dailyTipIndex + 1;
+        }
+
+        function getProgress() {
+            const total = Object.keys(completedWorkouts).length;
+            const currentWeekCompleted = Object.keys(completedWorkouts).filter(key => key.startsWith(`${currentWeek}-`)).length;
+            return { total, currentWeek: currentWeekCompleted };
+        }
+
+        function toggleWorkout(week, day) {
+            const key = `${week}-${day}`;
+            if (completedWorkouts[key]) {
+                delete completedWorkouts[key];
+            } else {
+                completedWorkouts[key] = new Date().toISOString();
+            }
+            saveData();
+            updateUI();
+        }
+
+        function changeWeek(direction) {
+            const newWeek = Math.max(1, Math.min(9, currentWeek + direction));
+            if (newWeek !== currentWeek) {
+                currentWeek = newWeek;
+                saveData();
+                updateUI();
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Hide all tabs
+            document.getElementById('planTab').classList.add('hidden');
+            document.getElementById('statsTab').classList.add('hidden');
+            document.getElementById('learnTab').classList.add('hidden');
+            
+            // Show selected tab
+            if (tab === 'plan') {
+                document.getElementById('planTab').classList.remove('hidden');
+            } else if (tab === 'stats') {
+                document.getElementById('statsTab').classList.remove('hidden');
+            } else if (tab === 'learn') {
+                document.getElementById('learnTab').classList.remove('hidden');
+            }
+        }
+
+        function nextTip() {
+            dailyTipIndex = (dailyTipIndex + 1) % dailyTips.length;
+            saveData();
+            updateTip();
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
